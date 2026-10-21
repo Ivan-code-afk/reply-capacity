@@ -22,3 +22,17 @@ jobs:
         run: node test-core.js
       - name: Run browser logic regression tests
         run: node test-ui.js
+      - name: Check responsive layout in Chrome
+        shell: bash
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/reply-capacity-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8000/ > /dev/null; then break; fi
+            sleep 0.2
+          done
+          browser=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
+          "$browser" --headless --no-sandbox --disable-gpu --no-proxy-server --disable-dev-shm-usage --virtual-time-budget=20000 --dump-dom http://127.0.0.1:8000/tests/browser.html > /tmp/reply-capacity-browser.html
+          cat /tmp/reply-capacity-browser.html
+          grep -q 'data-status="passed"' /tmp/reply-capacity-browser.html

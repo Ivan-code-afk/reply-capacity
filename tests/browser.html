@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Reply Capacity browser checks</title>
+<body>
+<pre id="report">RUNNING</pre>
+<iframe id="app" title="Application under test" style="height:6000px;border:0"></iframe>
+<script>
+(async function () {
+  'use strict';
+  const report = document.getElementById('report');
+  const frame = document.getElementById('app');
+  const storageKeys = ['reply-capacity-language', 'reply-capacity-v1'];
+  const previous = storageKeys.map(key => localStorage.getItem(key));
+  const results = [];
+  const assert = (condition, message) => { if (!condition) throw Error(message); };
+  const stable = value => JSON.stringify(value);
+  try {
+    storageKeys.forEach(key => localStorage.removeItem(key));
+    const loaded = new Promise((resolve, reject) => {
+      frame.onload = resolve;
+      frame.onerror = () => reject(Error('Application did not load'));
+    });
+    frame.src = '../index.html';
+    await loaded;
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    assert(win.currentReplyCapacityResult, 'Application did not initialize');
+    assert(doc.documentElement.lang === 'en', 'First visit must be English');
+    const change = (key, value) => {
+      const field = doc.getElementById(key + '-number');
+      field.value = value;
+      field.dispatchEvent(new win.Event('change', {bubbles:true}));
+    };
+    for (const width of [320,375,390,768,1280]) {
+      frame.style.width = width + 'px';
+      for (const language of ['en','ru','fr','de']) {
+        const before = stable(win.currentReplyCapacityResult);
+        doc.getElementById('lang-' + language).click();
+        assert(stable(win.currentReplyCapacityResult) === before, 'Language changed the calculation');
+        assert(doc.documentElement.lang === language, 'HTML language mismatch');
+        for (const scenario of ['default','maximum','empty']) {
+          doc.getElementById('reset').click();
+          if (scenario === 'maximum') {
+            change('dailyIncoming',500); change('unanswered',5000); change('minutesPerReply',120); change('dailyMinutes',0);
+          } else if (scenario === 'empty') {
+            change('dailyIncoming',0); change('unanswered',0); change('dailyMinutes',0);
+          }
+          const client = doc.documentElement.clientWidth;
+          const scroll = doc.documentElement.scrollWidth;
+          assert(scroll <= client, `${width}px ${language} ${scenario}: scrollWidth=${scroll}, clientWidth=${client}`);
+          for (const selector of ['.card','.field-head','input[type="range"]','#queue-chart','#copy','#reset','.languages']) {
+            for (const node of doc.querySelectorAll(selector)) {
+              const rect = node.getBoundingClientRect();
+              assert(rect.width > 0 && rect.left >= -1 && rect.right <= client + 1, `${width}px ${language}: ${selector} outside viewport`);
+            }
+          }
+          if (language !== 'ru') {
+            assert(!/[а-яё]/i.test(doc.body.innerText), `${language}: Russian visible text`);
+            for (const node of doc.querySelectorAll('[aria-label]')) assert(!/[а-яё]/i.test(node.getAttribute('aria-label')), `${language}: Russian ARIA`);
+          }
+          assert(!/\{\w+\}/.test(doc.body.innerText), 'Unresolved translation parameter');
+          results.push(`${width}px ${language} ${scenario}: ${scroll}/${client} PASS`);
+        }
+      }
+    }
+    // Check native range sanitization, which a mocked DOM cannot reproduce.
+    change('dailyMinutes',61);
+    assert(doc.getElementById('dailyMinutes-range').value === '61', 'Minute range mismatch');
+    assert(win.currentReplyCapacityResult.inputs.dailyMinutes === 61, 'Minute input mismatch');
+    doc.getElementById('lang-de').click();
+    const savedInputs = stable(win.currentReplyCapacityResult.inputs);
+    const reloaded = new Promise(resolve => { frame.onload = resolve; });
+    win.location.reload();
+    await reloaded;
+    assert(frame.contentDocument.documentElement.lang === 'de', 'Language not restored on reload');
+    assert(stable(frame.contentWindow.currentReplyCapacityResult.inputs) === savedInputs, 'Inputs not restored on reload');
+    frame.contentDocument.getElementById('reset').click();
+    assert(frame.contentDocument.documentElement.lang === 'de', 'Reset changed language');
+    report.textContent = 'PASS: 60 responsive cases; native input synchronization; language/input reload and reset\n' + results.join('\n');
+    report.dataset.status = 'passed';
+  } catch (error) {
+    report.textContent = 'FAIL: ' + error.stack + '\n' + results.join('\n');
+    report.dataset.status = 'failed';
+  } finally {
+    storageKeys.forEach((key, i) => previous[i] === null ? localStorage.removeItem(key) : localStorage.setItem(key, previous[i]));
+  }
+})();
+</script>
+</body>
+</html>
