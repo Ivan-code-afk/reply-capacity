@@ -99,7 +99,7 @@
       copy: 'Copier le résultat ↗', copyNote: 'Sans prévision d’audience ni algorithme caché', copyDone: 'Résultat copié ✓', copyFailed: 'Impossible de copier le résultat',
       methodHeading: 'Comment est-ce calculé ?',
       method: 'Chaque jour, les nouveaux messages rejoignent la file d’attente. Nous retirons autant de réponses que le temps quotidien le permet. Formule : file suivante = max(0, file actuelle + nouveaux messages − réponses envoyées). La charge reste constante pendant les 7 jours, week-end compris. Il s’agit d’un calcul de scénario, pas d’une prévision des futurs messages réels.',
-      footer: 'Reply Capacity · Un prototype à usage unique. Les valeurs de l’exemple sont indicatives.', footerPrivacy: 'Sans compte, suivi ni transmission de données à un serveur.',
+      footer: 'Reply Capacity · Un prototype dédié à une seule fonction. Les valeurs de l’exemple sont indicatives.', footerPrivacy: 'Sans compte, suivi ni transmission de données à un serveur.',
       messageForms: {one: 'message', other: 'messages'}, replyForms: {one: 'réponse', other: 'réponses'},
       copyReport: 'Reply Capacity — scénario sur 7 jours\nMessages reçus : {incoming} par jour\nEn attente : {backlog}\nTemps par réponse : {replyTime}\nTemps quotidien disponible : {budget}\nCapacité quotidienne : {capacity}\nSans réponse après 7 jours : {queue}\nTemps quotidien supplémentaire pour tout traiter en 7 jours : {extra}\nHypothèse : la même charge chaque jour.',
       copyImpossible: 'Limite : plus de 24 heures par jour sont nécessaires ; ce scénario est impossible pour une seule personne.',
