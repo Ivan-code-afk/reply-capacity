@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Reply Capacity — простой калькулятор нагрузки на сообщения. Узнайте, хватит ли времени ответить всем и сколько ответов останется через 7 дней.">
+  <title>Reply Capacity — успеете ответить всем?</title>
+  <style>
+    :root {
+      --ink:#17272a;--muted:#657474;--page:#f6f7f3;--panel:#ffffff;--line:#dee4df;
+      --teal:#067967;--mint:#e2f5e9;--orange:#e96e48;--peach:#fff0e7;--blue:#21769b;
+      --soft:#f0f3ef;--shadow:0 22px 70px rgba(19,47,39,.07);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(ellipse at 93% 0%,#e5eee7 0,transparent 34%),var(--page);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.45}
+    a{color:inherit} button,input{font:inherit}
+    button{cursor:pointer}
+    .site-header{max-width:1160px;margin:auto;padding:27px 32px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:11px;font-size:16px;font-weight:790;letter-spacing:-.4px}
+    .logo{background:var(--ink);color:white;border-radius:12px;width:37px;height:37px;display:grid;place-items:center;font-size:19px;font-weight:780}
+    .top-tag{display:flex;align-items:center;gap:8px;font-weight:600;color:#596966;font-size:12px;background:#ffffffbc;border:1px solid var(--line);padding:8px 12px;border-radius:22px}
+    .dot{width:7px;height:7px;border-radius:50%;background:#159878}
+    main{max-width:1160px;margin:auto;padding:12px 32px 25px}
+    .hero{text-align:center;max-width:780px;margin:35px auto 36px}
+    .eyebrow{font-weight:750;letter-spacing:1.75px;font-size:11px;color:var(--teal);text-transform:uppercase}
+    h1{font-size:clamp(35px,5.2vw,58px);line-height:1.085;letter-spacing:-2.5px;margin:14px auto 17px;font-weight:820;max-width:730px}
+    h1 span{color:var(--teal)}
+    .lead{color:#5b6b69;max-width:620px;font-size:17px;line-height:1.55;margin:0 auto}
+    .layout{display:grid;grid-template-columns:minmax(320px,.92fr) minmax(385px,1.08fr);align-items:start;gap:20px}
+    .card{background:var(--panel);border:1px solid #e2e7e2;border-radius:25px;box-shadow:var(--shadow);padding:29px}
+    .card-header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:24px}
+    .card h2{font-size:21px;letter-spacing:-.6px;margin:0;line-height:1.2}
+    .small-pill{font-size:11px;border-radius:99px;padding:6px 10px;background:var(--soft);font-weight:700;color:#53625b;white-space:nowrap}
+    .field{margin-bottom:23px}
+    .field-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px}
+    label{font-size:14px;font-weight:700}
+    .value-wrap{display:flex;align-items:center;gap:5px;background:#f4f7f3;border:1px solid #e2e7e1;border-radius:11px;padding:4px 9px}
+    .value-wrap input{border:0;background:transparent;color:var(--ink);text-align:right;width:58px;outline:none;font-size:17px;font-weight:790;appearance:textfield;-moz-appearance:textfield}
+    input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{appearance:none;margin:0}
+    .value-wrap:focus-within{outline:2px solid #8bd1bc;outline-offset:2px}
+    .value-wrap .unit{color:#768782;font-size:12px;font-weight:670}
+    .hint{color:#86928e;font-size:12px;margin:0 0 13px}
+    input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;min-height:24px;display:block}
+    .range-ends{display:flex;justify-content:space-between;color:#9daaa3;font-size:11px;margin-top:2px}
+    .input-bottom{border-top:1px solid var(--line);padding-top:19px;margin-top:5px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .privacy{font-size:11px;color:#788882;display:flex;align-items:center;gap:7px}
+    .reset{background:transparent;border:0;color:var(--teal);font-size:12px;font-weight:740;padding:8px 1px}
+    .reset:hover{text-decoration:underline}
+    .results{border-color:#cfe2d5}
+    .status{display:inline-flex;align-items:center;gap:7px;border-radius:30px;padding:7px 11px;font-size:12px;font-weight:750}
+    .status.danger{background:var(--peach);color:#b34d2b}
+    .status.good{background:var(--mint);color:#167653}
+    .status.neutral{background:#e9f0f6;color:#3a6d83}
+    .status .signal{width:7px;height:7px;border-radius:50%;background:currentColor}
+    .result-kicker{font-size:13px;color:var(--muted);font-weight:650;margin-top:20px}
+    .primary-number{font-size:clamp(56px,8vw,91px);letter-spacing:-5px;line-height:1;font-weight:835;margin:7px 0 0}
+    .primary-number .num-suffix{font-size:17px;letter-spacing:0;color:#6a7973;font-weight:650;margin-left:9px}
+    .explain{font-size:15px;line-height:1.55;color:#566b64;min-height:47px;max-width:430px;margin:10px 0 21px}
+    .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+    .metric{background:#f4f6f3;border:1px solid #eef1ed;border-radius:14px;padding:14px}
+    .metric .num{font-size:25px;line-height:1.25;letter-spacing:-.7px;font-weight:790}
+    .metric .txt{font-size:12px;color:#77847e;margin-top:5px}
+    .action{border:1px solid #beddd2;background:#e9f7f1;border-radius:17px;padding:17px 18px}
+    .action.warning{background:#fdf2eb;border-color:#f4d7c7}
+    .action .action-top{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:770;letter-spacing:.2px;color:#217b62;text-transform:uppercase}
+    .action.warning .action-top{color:#af562e}
+    .action .action-main{font-size:21px;font-weight:800;letter-spacing:-.5px;margin:8px 0 5px}
+    .action .action-sub{font-size:12px;color:#6b7970;line-height:1.55}
+    .chart-card{margin-top:22px;border-top:1px solid var(--line);padding-top:17px}
+    .chart-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .chart-header h3{font-size:14px;margin:0}
+    .chart-header .tiny{font-size:11px;color:#829088}
+    #queue-chart{display:block;width:100%;height:auto;min-height:170px;overflow:visible}
+    .copyrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+    .copy{background:#172d29;color:white;border:0;border-radius:12px;padding:12px 16px;font-size:12px;font-weight:740;transition:background .15s}
+    .copy:hover{background:#31584c}
+    .microcopy{font-size:11px;color:#87938d;max-width:200px;text-align:right}
+    .foot{max-width:1160px;margin:0 auto;padding:4px 32px 30px;display:flex;gap:20px;justify-content:space-between;font-size:12px;color:#86928b;line-height:1.6}
+    .foot p{margin:0}
+    .how{font-size:12px;color:#718179;background:#eef1eb;border-radius:14px;padding:16px 20px;margin-top:21px}
+    .how strong{color:#3a5650}
+    .how p{margin:6px 0 0}
+    button:focus-visible,input:focus-visible{outline:3px solid #70c6b0;outline-offset:3px}
+    @media(max-width:850px){.layout{grid-template-columns:1fr}.hero{margin:24px auto 32px}h1{letter-spacing:-1.7px}.card{padding:25px}}
+    @media(max-width:530px){.site-header{padding:19px 18px 8px}.top-tag{font-size:10px;padding:7px}.brand{font-size:14px}main{padding:7px 15px 17px}.hero{margin:23px auto 26px}h1{font-size:38px;letter-spacing:-1.7px}.lead{font-size:14px}.card{padding:20px;border-radius:20px}.layout{gap:14px}.foot{padding:6px 17px 25px;display:block}.foot p+p{margin-top:9px}.primary-number{font-size:69px}.card h2{font-size:19px}.metrics{gap:7px}.metric{padding:12px}.copyrow{align-items:flex-start}.microcopy{font-size:10px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">↗</div><span>Reply Capacity</span></div>
+    <div class="top-tag"><span class="dot" aria-hidden="true"></span> Без регистрации и подключения соцсетей</div>
+  </header>
+  <main>
+    <div class="hero">
+      <div class="eyebrow">Одна функция. Чёткий ответ.</div>
+      <h1>Ты успеешь <span>ответить всем?</span></h1>
+      <p class="lead">Узнай за 10 секунд, хватит ли времени на сообщения клиентов — и как изменится очередь за следующую неделю.</p>
+    </div>
+    <div class="layout">
+      <section class="card" aria-labelledby="setup-title">
+        <div class="card-header"><h2 id="setup-title">Твоя нагрузка</h2><span class="small-pill">4 параметра</span></div>
+        <div class="field">
+          <div class="field-head"><label for="dailyIncoming-number">Новых сообщений в день</label><div class="value-wrap"><input type="number" id="dailyIncoming-number" min="0" max="500" step="1" inputmode="numeric"><span class="unit">шт.</span></div></div>
+          <p class="hint">Сколько сообщений требуют отдельного ответа</p>
+          <input type="range" id="dailyIncoming-range" min="0" max="150" step="1" aria-label="Новых сообщений в день"><div class="range-ends"><span>0</span><span>150+</span></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="unanswered-number">Уже ждут ответа</label><div class="value-wrap"><input type="number" id="unanswered-number" min="0" max="5000" step="1" inputmode="numeric"><span class="unit">шт.</span></div></div>
+          <p class="hint">Текущая очередь без ответа</p>
+          <input type="range" id="unanswered-range" min="0" max="300" step="1" aria-label="Уже ждут ответа"><div class="range-ends"><span>0</span><span>300+</span></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="minutesPerReply-number">Минут на один ответ</label><div class="value-wrap"><input type="number" id="minutesPerReply-number" min="1" max="120" step="1" inputmode="numeric"><span class="unit">мин.</span></div></div>
+          <p class="hint">Среднее время, которое ты действительно тратишь</p>
+          <input type="range" id="minutesPerReply-range" min="1" max="30" step="1" aria-label="Минут на один ответ"><div class="range-ends"><span>1</span><span>30+</span></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="dailyMinutes-number">Времени на ответы в день</label><div class="value-wrap"><input type="number" id="dailyMinutes-number" min="0" max="1440" step="1" inputmode="numeric"><span class="unit">мин.</span></div></div>
+          <p class="hint">Без монтажа, звонков и других задач</p>
+          <input type="range" id="dailyMinutes-range" min="0" max="300" step="5" aria-label="Времени на ответы в день"><div class="range-ends"><span>0</span><span>300+</span></div>
+        </div>
+        <div class="input-bottom">
+          <div class="privacy"><span aria-hidden="true">◈</span> Данные остаются в браузере</div>
+          <button class="reset" id="reset" type="button">Сбросить пример ↺</button>
+        </div>
+      </section>
+      <section class="card results" aria-labelledby="result-title">
+        <div class="card-header"><h2 id="result-title">Результат на 7 дней</h2><span class="small-pill">Расчёт в реальном времени</span></div>
+        <div id="state" class="status danger" role="status"><span class="signal" aria-hidden="true"></span><span id="state-text">Очередь растёт</span></div>
+        <div class="result-kicker">Останется без ответа через 7 дней</div>
+        <div class="primary-number" aria-live="polite"><span id="queue-after">70</span><span class="num-suffix">сообщений</span></div>
+        <p class="explain" id="explain">При текущей нагрузке очередь будет увеличиваться.</p>
+        <div class="metrics">
+          <div class="metric"><div class="num" id="capacity">15</div><div class="txt">ответов успеваешь в день</div></div>
+          <div class="metric"><div class="num" id="answered">105</div><div class="txt">ответов за следующие 7 дней</div></div>
+        </div>
+        <div class="action warning" id="action">
+          <div class="action-top"><span aria-hidden="true">✦</span><span id="action-heading">Что изменить</span></div>
+          <div class="action-main" id="action-main">+40 минут в день</div>
+          <div class="action-sub" id="action-sub">Чтобы за неделю ответить на новые сообщения и разобрать старую очередь.</div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><h3>Очередь по дням</h3><span class="tiny">при неизменной нагрузке</span></div>
+          <svg id="queue-chart" viewBox="0 0 630 192" role="img" aria-label="Остаток неотвеченных сообщений по дням">
+            <title id="chart-title">Количество сообщений без ответа</title>
+            <desc id="chart-desc">Столбцы показывают остаток очереди в конце каждого из семи дней.</desc>
+          </svg>
+        </div>
+        <div class="copyrow"><button type="button" class="copy" id="copy">Скопировать результат ↗</button><span class="microcopy" id="copy-note">Без прогнозов охватов и скрытых алгоритмов</span></div>
+      </section>
+    </div>
+    <div class="how" id="method"><strong>Как считаем?</strong><p>Каждый день к очереди прибавляются новые сообщения. Из неё вычитается столько ответов, сколько помещается в ежедневный бюджет времени. Формула: очередь завтра = максимум(0, очередь сегодня + новые сообщения − обработанные). Предполагаем одинаковый поток все 7 дней, включая выходные. Это сценарный расчёт, а не предсказание реального числа сообщений.</p></div>
+  </main>
+  <footer class="foot"><p>Reply Capacity · Прототип одной функции. Все значения в примере условные.</p><p>Без аккаунтов, отслеживания и передачи данных на сервер.</p></footer>
+  <script src="reply-capacity-core.js"></script>
+  <script>
+    (function(){
+      'use strict';
+      const engine=window.ReplyCapacity;
+      const keys=['dailyIncoming','unanswered','minutesPerReply','dailyMinutes'];
+      const uiBounds={dailyIncoming:[0,500],unanswered:[0,5000],minutesPerReply:[1,120],dailyMinutes:[0,1440]};
+      const el=id=>document.getElementById(id);
+      let inputs={...engine.DEFAULTS};
+      try{
+        const saved=localStorage.getItem('reply-capacity-v1');
+        if(saved){const obj=JSON.parse(saved);const candidate={...inputs};for(const k of keys){if(Number.isInteger(obj[k]) && obj[k]>=uiBounds[k][0] && obj[k]<=uiBounds[k][1])candidate[k]=obj[k];}engine.simulate(candidate);inputs=candidate;}
+      }catch(_e){}
+      const format=new Intl.NumberFormat('ru-RU');
+      const labelMinutes=n=>n>=60?(Math.floor(n/60)+' ч'+(n%60?' '+(n%60)+' мин':'')):(n+' мин');
+      function sync(){for(const k of keys){el(k+'-number').value=inputs[k];const range=el(k+'-range');range.value=Math.min(Number(range.max),inputs[k]);}}
+      function updateInput(key,value){const n=Math.round(Number(value));if(!Number.isFinite(n))return;inputs[key]=Math.min(uiBounds[key][1],Math.max(uiBounds[key][0],n));sync();try{localStorage.setItem('reply-capacity-v1',JSON.stringify(inputs));}catch(_e){} render();}
+      for(const k of keys){
+        el(k+'-range').addEventListener('input',e=>updateInput(k,e.target.value));
+        el(k+'-number').addEventListener('change',e=>updateInput(k,e.target.value===''?inputs[k]:e.target.value));
+        el(k+'-number').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
+      }
+      el('reset').addEventListener('click',()=>{inputs={...engine.DEFAULTS};sync();try{localStorage.removeItem('reply-capacity-v1');}catch(_e){}render();el('reset').textContent='Пример восстановлен ✓';setTimeout(()=>el('reset').textContent='Сбросить пример ↺',1500);});
+      function graph(r){
+        const svg=el('queue-chart'); const arr=r.series;
+        const max=Math.max(1,...arr.map(d=>d.queue));
+        const left=22,top=19,baseline=158,plotH=119,space=82,barW=39;
+        const fill=r.state==='clear'?'#13866b':r.state==='growing'?'#eb885c':'#4785a0';
+        let s=`<line x1="10" y1="${baseline}" x2="622" y2="${baseline}" stroke="#d9e2dc" stroke-width="1"/>`;
+        arr.forEach((d,i)=>{
+          const x=left+i*space+14, h=d.queue===0?0:Math.max(5,(d.queue/max)*plotH), y=baseline-h;
+          s+=`<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="7" fill="${fill}" opacity="${0.69+i*.04}"><title>День ${d.day}: ${d.queue} без ответа</title></rect>`;
+          s+=`<text x="${x+barW/2}" y="${Math.max(12,y-7)}" text-anchor="middle" font-size="13" font-weight="700" fill="#455d53">${format.format(d.queue)}</text>`;
+          s+=`<text x="${x+barW/2}" y="${baseline+21}" text-anchor="middle" font-size="12" fill="#83918a">Д${d.day}</text>`;
+        });
+        svg.innerHTML=s;
+        svg.setAttribute('aria-label','Остаток сообщений по дням: '+arr.map(d=>'день '+d.day+' — '+d.queue).join('; '));
+      }
+      function render(){
+        const r=engine.simulate({...inputs,days:7});
+        const statuses={clear:['good','Очередь будет разобрана'],shrinking:['neutral','Очередь сокращается'],steady:['neutral','Очередь не уменьшается'],growing:['danger','Очередь растёт']};
+        const [klass,status]=statuses[r.state];
+        el('state').className='status '+klass;
+        el('state-text').textContent=status;
+        el('queue-after').textContent=format.format(r.queueAfter);
+        el('capacity').textContent=format.format(r.dailyCapacity);
+        el('answered').textContent=format.format(r.totalAnswered);
+        const delta=r.queueChange;
+        let desc;
+        if(r.queueAfter===0){desc=inputs.unanswered>0?'При этой нагрузке старая очередь будет разобрана, а новые сообщения обработаны.':'Ежедневного времени достаточно для обработки новых сообщений.';}
+        else if(delta>0){desc=`За неделю очередь увеличится на ${format.format(delta)} ${plural(delta,'сообщение','сообщения','сообщений')}. Новых обращений больше, чем возможностей ответить.`;}
+        else if(delta<0){desc=`За неделю очередь уменьшится на ${format.format(-delta)} ${plural(-delta,'сообщение','сообщения','сообщений')}, но полностью не исчезнет.`;}
+        else desc='Очередь останется на том же уровне: времени хватает на текущий поток, но не на старые сообщения.';
+        el('explain').textContent=desc;
+        const act=el('action');
+        if(r.additionalMinutes>0){
+          act.className='action warning';el('action-heading').textContent='Как разобрать очередь за 7 дней';el('action-main').textContent='+'+labelMinutes(r.additionalMinutes)+' в день';
+          el('action-sub').textContent=`Нужно ${labelMinutes(r.minutesToClearWithinPeriod)} в день вместо ${labelMinutes(inputs.dailyMinutes)}. Это позволит обработать и новые сообщения, и текущую очередь при ваших допущениях.`;
+        }else{
+          act.className='action';el('action-heading').textContent='Текущего времени достаточно';el('action-main').textContent='Дополнительное время не нужно';
+          const reserve=Math.max(0,inputs.dailyMinutes-r.minutesToHandleDailyIncoming);
+          el('action-sub').textContent=inputs.unanswered>0?'Старая очередь будет полностью разобрана не позже конца недели при заданном притоке.':`На текущий входящий поток требуется ${labelMinutes(r.minutesToHandleDailyIncoming)} в день. ${reserve>0?'Остаётся резерв '+labelMinutes(reserve)+'.':'Резерва времени нет.'}`;
+        }
+        graph(r);
+        window.currentReplyCapacityResult=r;
+      }
+      function plural(n,a,b,c){n=Math.abs(n)%100;const t=n%10;return (n>10&&n<20)?c:(t===1?a:(t>=2&&t<=4?b:c));}
+      el('copy').addEventListener('click',async()=>{
+        const r=window.currentReplyCapacityResult;
+        const message=`Reply Capacity — сценарий на 7 дней\nВходящие: ${r.inputs.dailyIncoming}/день\nУже ждут ответа: ${r.inputs.unanswered}\nВремя на ответ: ${r.inputs.minutesPerReply} мин\nБюджет времени: ${r.inputs.dailyMinutes} мин/день\nВместимость: ${r.dailyCapacity} ответов/день\nЧерез 7 дней останется: ${r.queueAfter}\nДополнительно для полной разгрузки за 7 дней: ${r.additionalMinutes} мин/день\nДопущение: одинаковая нагрузка ежедневно.`;
+        let ok=false;
+        try{await navigator.clipboard.writeText(message);ok=true;}catch(_e){const t=document.createElement('textarea');t.value=message;t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();try{ok=document.execCommand('copy');}catch(_error){}t.remove();}
+        el('copy-note').textContent=ok?'Результат скопирован ✓':'Скопировать не удалось';
+        setTimeout(()=>el('copy-note').textContent='Без прогнозов охватов и скрытых алгоритмов',2500);
+      });
+      sync();render();
+    })();
+  </script>
+</body>
+</html>
