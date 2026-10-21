@@ -33,6 +33,10 @@ jobs:
             sleep 0.2
           done
           browser=$(command -v google-chrome || command -v chromium || command -v chromium-browser)
-          "$browser" --headless --no-sandbox --disable-gpu --no-proxy-server --disable-dev-shm-usage --virtual-time-budget=20000 --dump-dom http://127.0.0.1:8000/tests/browser.html > /tmp/reply-capacity-browser.html
+          "$browser" --headless --lang=ru-RU --no-sandbox --disable-gpu --no-proxy-server --disable-dev-shm-usage --virtual-time-budget=20000 --dump-dom http://127.0.0.1:8000/tests/browser.html > /tmp/reply-capacity-browser.html
           cat /tmp/reply-capacity-browser.html
           grep -q 'data-status="passed"' /tmp/reply-capacity-browser.html
+          smoke_file=$(node tests/prepare-file-smoke.js)
+          "$browser" --headless --lang=ru-RU --no-sandbox --disable-gpu --no-proxy-server --disable-dev-shm-usage --virtual-time-budget=2000 --dump-dom "file://$smoke_file" > /tmp/reply-capacity-file.html
+          grep -q 'data-file-status="passed"' /tmp/reply-capacity-file.html
+          echo 'file:// initialization, EN default, language switching and reset: PASS'

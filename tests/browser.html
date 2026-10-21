@@ -25,6 +25,9 @@
     await loaded;
     const win = frame.contentWindow;
     const doc = frame.contentDocument;
+    const runtimeErrors = [];
+    win.addEventListener('error', event => runtimeErrors.push(event.message));
+    win.addEventListener('unhandledrejection', event => runtimeErrors.push(String(event.reason)));
     assert(win.currentReplyCapacityResult, 'Application did not initialize');
     assert(doc.documentElement.lang === 'en', 'First visit must be English');
     const change = (key, value) => {
@@ -68,6 +71,10 @@
     change('dailyMinutes',61);
     assert(doc.getElementById('dailyMinutes-range').value === '61', 'Minute range mismatch');
     assert(win.currentReplyCapacityResult.inputs.dailyMinutes === 61, 'Minute input mismatch');
+    assert(runtimeErrors.length === 0, 'Browser runtime errors: ' + runtimeErrors.join('; '));
+    for (const entry of win.performance.getEntriesByType('resource')) {
+      assert(new URL(entry.name).origin === location.origin, 'External resource request: ' + entry.name);
+    }
     doc.getElementById('lang-de').click();
     const savedInputs = stable(win.currentReplyCapacityResult.inputs);
     const reloaded = new Promise(resolve => { frame.onload = resolve; });
