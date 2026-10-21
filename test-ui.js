@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const html = fs.readFileSync('index.html', 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
-function boot({ saved, blockedStorage = false } = {}) {
+function boot({ saved, blockedStorage = false, clipboardAvailable = true, fallbackSuccess = true } = {}) {
   const elements = new Map();
   for (const match of html.matchAll(/<([\w-]+)\b([^>]*\bid="([^"]+)"[^>]*)>/g)) {
     const attrs = Object.fromEntries([...match[2].matchAll(/([\w-]+)="([^"]*)"/g)].map(m => [m[1], m[2]]));
@@ -16,23 +16,31 @@ function boot({ saved, blockedStorage = false } = {}) {
   }
   let stored = saved;
   let copied;
+  let temporaryField;
   const context = {
-    ReplyCapacity: require('./reply-capacity-core'), Intl, setTimeout() {},
+    Intl, setTimeout() {},
     localStorage: {
       getItem() { if (blockedStorage) throw Error('Storage blocked'); return stored; },
       setItem(key, value) { if (blockedStorage) throw Error('Storage blocked'); stored = value; },
       removeItem() { if (blockedStorage) throw Error('Storage blocked'); stored = null; },
     },
-    navigator: { clipboard: { async writeText(value) { copied = value; } } },
-    document: { getElementById(id) { assert.ok(elements.has(id), `Missing element ${id}`); return elements.get(id); } },
+    navigator: clipboardAvailable ? { clipboard: { async writeText(value) { copied = value; } } } : {},
+    document: {
+      getElementById(id) { assert.ok(elements.has(id), `Missing element ${id}`); return elements.get(id); },
+      createElement() { return { style: {}, select() {}, remove() { temporaryField = null; } }; },
+      body: { appendChild(field) { temporaryField = field; } },
+      execCommand(command) { assert.equal(command, 'copy'); copied = temporaryField.value; return fallbackSuccess; },
+    },
   };
   context.window = context;
+  vm.runInNewContext(fs.readFileSync('reply-capacity-core.js', 'utf8'), context);
   vm.runInNewContext(script, context);
   return {
     el: id => elements.get(id),
     result: () => context.currentReplyCapacityResult,
     stored: () => stored,
     copied: () => copied,
+    temporaryField: () => temporaryField,
     change(key, value) {
       const target = elements.get(key + '-number'); target.value = value;
       target.handlers.change({ target });
@@ -84,6 +92,12 @@ async function main() {
   boundary.change('minutesPerReply', '120');
   assert.equal(boundary.result().minutesToClearWithinPeriod, 1440);
   assert.equal(boundary.el('action-main').textContent, '+23 ч в день');
+  for (const fallbackSuccess of [true, false]) {
+    const fallback = boot({ clipboardAvailable: false, fallbackSuccess });
+    await fallback.el('copy').handlers.click();
+    assert.equal(fallback.el('copy-note').textContent, fallbackSuccess ? 'Результат скопирован ✓' : 'Скопировать не удалось');
+    assert.equal(fallback.temporaryField(), null);
+  }
   console.log('UI logic: input synchronization, bounds, persistence, reset, unavailable storage and clipboard passed');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

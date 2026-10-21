@@ -18,6 +18,38 @@ const tests = [
   ['determinism', () => assert.deepEqual(simulate(),simulate())],
   ['stock conservation', () => { const r=simulate(); assert.equal(r.inputs.unanswered+r.totalIncoming-r.totalAnswered,r.queueAfter); }],
   ['required additional time really clears backlog', () => { const a=simulate(); const b=simulate({...a.inputs,dailyMinutes:a.inputs.dailyMinutes+a.additionalMinutes}); assert.equal(b.queueAfter,0); }],
+  ['independent queue balance and minimum daily budget across 3360 scenarios', () => {
+    for (const dailyIncoming of [0,1,2,20,100000])
+    for (const unanswered of [0,1,6,7,8,35,1000000])
+    for (const minutesPerReply of [1,3,4,240])
+    for (const dailyMinutes of [0,1,5,60,1439,1440])
+    for (const days of [1,2,7,365]) {
+      const r = simulate({dailyIncoming,unanswered,minutesPerReply,dailyMinutes,days});
+      const cap = Math.floor(dailyMinutes / minutesPerReply);
+      const expectedQueue = Math.max(0, unanswered + days * (dailyIncoming - cap));
+      assert.equal(r.queueAfter, expectedQueue);
+      assert.equal(r.totalAnswered, unanswered + days * dailyIncoming - expectedQueue);
+      r.series.forEach((day, i) => {
+        const before = i === 0 ? unanswered : r.series[i-1].queue;
+        assert.equal(day.queue + day.answered, before + dailyIncoming);
+        assert.ok(day.answered <= cap && day.queue >= 0);
+      });
+      const required = r.minutesToClearWithinPeriod;
+      assert.equal(Math.max(0, unanswered + days * (dailyIncoming - Math.floor(required / minutesPerReply))), 0);
+      if (required > 0) {
+        assert.ok(unanswered + days * (dailyIncoming - Math.floor((required - 1) / minutesPerReply)) > 0);
+      }
+      assert.equal(r.additionalMinutes, Math.max(0, required - dailyMinutes));
+    }
+  }],
+  ['reject invalid values for every bounded input', () => {
+    const limits = {dailyIncoming:[0,100000],unanswered:[0,1000000],minutesPerReply:[1,240],dailyMinutes:[0,1440],days:[1,365]};
+    for (const [key,[min,max]] of Object.entries(limits)) {
+      for (const value of [NaN,Infinity,-Infinity,'1',null,undefined,1.5,min-1,max+1]) {
+        assert.throws(() => simulate({[key]:value}), RangeError);
+      }
+    }
+  }],
 ];
 let count=0;
 for (const [name,fn] of tests){ try{ fn(); count++; console.log('✓',name);} catch(e){console.error('✗',name);throw e;} }

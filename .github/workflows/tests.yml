@@ -20,3 +20,5 @@ jobs:
           node-version: '22'
       - name: Run deterministic engine tests
         run: node test-core.js
+      - name: Run browser logic regression tests
+        run: node test-ui.js
