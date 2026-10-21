@@ -211,7 +211,13 @@
         const act=el('action');
         if(r.additionalMinutes>0){
           act.className='action warning';el('action-heading').textContent='Как разобрать очередь за 7 дней';el('action-main').textContent='+'+labelMinutes(r.additionalMinutes)+' в день';
-          el('action-sub').textContent=`Нужно ${labelMinutes(r.minutesToClearWithinPeriod)} в день вместо ${labelMinutes(inputs.dailyMinutes)}. Это позволит обработать и новые сообщения, и текущую очередь при ваших допущениях.`;
+          if(r.minutesToClearWithinPeriod>1440){
+            el('action-heading').textContent='Нагрузка превышает 24 часа в сутки';
+            el('action-main').textContent='Разобрать за 7 дней не получится';
+            el('action-sub').textContent=`По расчёту нужно ${labelMinutes(r.minutesToClearWithinPeriod)} в день вместо ${labelMinutes(inputs.dailyMinutes)}. Это больше 24 часов: при заданном времени одного ответа такой сценарий для одного человека невозможен.`;
+          }else{
+            el('action-sub').textContent=`Нужно ${labelMinutes(r.minutesToClearWithinPeriod)} в день вместо ${labelMinutes(inputs.dailyMinutes)}. Это позволит обработать и новые сообщения, и текущую очередь при ваших допущениях.`;
+          }
         }else{
           act.className='action';el('action-heading').textContent='Текущего времени достаточно';el('action-main').textContent='Дополнительное время не нужно';
           const reserve=Math.max(0,inputs.dailyMinutes-r.minutesToHandleDailyIncoming);
@@ -223,7 +229,7 @@
       function plural(n,a,b,c){n=Math.abs(n)%100;const t=n%10;return (n>10&&n<20)?c:(t===1?a:(t>=2&&t<=4?b:c));}
       el('copy').addEventListener('click',async()=>{
         const r=window.currentReplyCapacityResult;
-        const message=`Reply Capacity — сценарий на 7 дней\nВходящие: ${r.inputs.dailyIncoming}/день\nУже ждут ответа: ${r.inputs.unanswered}\nВремя на ответ: ${r.inputs.minutesPerReply} мин\nБюджет времени: ${r.inputs.dailyMinutes} мин/день\nВместимость: ${r.dailyCapacity} ответов/день\nЧерез 7 дней останется: ${r.queueAfter}\nДополнительно для полной разгрузки за 7 дней: ${r.additionalMinutes} мин/день\nДопущение: одинаковая нагрузка ежедневно.`;
+        const message=`Reply Capacity — сценарий на 7 дней\nВходящие: ${r.inputs.dailyIncoming}/день\nУже ждут ответа: ${r.inputs.unanswered}\nВремя на ответ: ${r.inputs.minutesPerReply} мин\nБюджет времени: ${r.inputs.dailyMinutes} мин/день\nВместимость: ${r.dailyCapacity} ответов/день\nЧерез 7 дней останется: ${r.queueAfter}\nДополнительно для полной разгрузки за 7 дней: ${r.additionalMinutes} мин/день\nДопущение: одинаковая нагрузка ежедневно.${r.minutesToClearWithinPeriod>1440?'\nОграничение: требуется больше 24 часов в сутки; для одного человека сценарий невозможен.':''}`;
         let ok=false;
         try{await navigator.clipboard.writeText(message);ok=true;}catch(_e){const t=document.createElement('textarea');t.value=message;t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();try{ok=document.execCommand('copy');}catch(_error){}t.remove();}
         el('copy-note').textContent=ok?'Результат скопирован ✓':'Скопировать не удалось';
